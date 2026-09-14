@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAIR_FINANCE — Калькулятор рассрочки</title>
+<link rel="icon" href="logo_icon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="crossorigin" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { background: #EEF1F4; font-family: Manrope, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; color: #10202F; }
+  button { font: inherit; cursor: pointer; }
+  input, textarea { font: inherit; }
+  a { color: #14998B; text-decoration: none; }
+  a:hover { color: #0F7A70; }
+
+  .page { display: flex; justify-content: center; min-height: 100dvh; background: #EEF1F4; }
+  .app { width: 100%; max-width: 460px; background: #F7F9FA; min-height: 100dvh; padding-bottom: 22px; }
+
+  header.top { background: #16375C; padding: 18px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .brand-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .brand-row { display: flex; align-items: center; gap: 10px; }
+  .brand-logo { width: 32px; height: 32px; flex: none; border-radius: 9px; background: #fff; padding: 3px; object-fit: contain; }
+  .brand-name { font-size: 20px; font-weight: 800; letter-spacing: -0.2px; color: #fff; }
+  .brand-name b { color: #2BC0B0; font-weight: 800; }
+  .phone-link { font-size: 13px; font-weight: 700; letter-spacing: 0.2px; color: #BFD6EA; }
+  .phone-link:hover { color: #fff; }
+  .wa-btn { flex: none; width: 42px; height: 42px; border-radius: 13px; background: #25D366; display: grid; place-items: center; color: #fff; }
+  .wa-btn:hover { background: #1FBF5A; color: #fff; }
+  .wa-btn svg { width: 22px; height: 22px; fill: currentColor; }
+
+  main.content { padding: 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; background: #E9EDF1; border-radius: 13px; padding: 4px; }
+  .tab-btn { border: 0; border-radius: 9px; padding: 10px 8px; background: transparent; color: #55697A; font-size: 12.5px; font-weight: 800; letter-spacing: 0.1px; text-align: center; }
+  .tab-btn.active { background: #16375C; color: #fff; }
+  .tabs-caption { display: block; text-align: center; font-size: 11px; font-weight: 700; color: #6B7C8C; margin-top: -2px; }
+
+  .card { background: #fff; border: 1px solid #E4E9EE; border-radius: 14px; padding: 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .label { font-size: 10.5px; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase; color: #55697A; }
+  .hint { font-size: 11.5px; font-weight: 700; color: #14998B; text-align: right; }
+  .field-row { display: flex; align-items: center; gap: 8px; border-bottom: 2px solid #E4E9EE; padding-bottom: 6px; }
+  .field-row input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #10202F; font-variant-numeric: tabular-nums; }
+  .field-suffix { font-size: 18px; font-weight: 700; color: #6B7C8C; }
+  .field-suffix.small { font-size: 15px; }
+
+  .result { background: #16375C; border-radius: 14px; padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 12px; }
+  .result-top { display: flex; flex-direction: column; gap: 3px; }
+  .result-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #8FB0CC; }
+  .result-amount { font-size: 38px; font-weight: 800; line-height: 1.05; letter-spacing: -1.3px; color: #fff; font-variant-numeric: tabular-nums; }
+  .result-breakdown { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgb(255 255 255 / .14); padding-top: 10px; }
+  .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; }
+  .breakdown-row span { color: #8FB0CC; font-weight: 500; }
+  .breakdown-row b { color: #fff; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .breakdown-total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid rgb(255 255 255 / .14); padding-top: 10px; }
+  .breakdown-total span { font-size: 14px; font-weight: 700; color: #fff; }
+  .breakdown-total b { font-size: 20px; font-weight: 800; color: #2BC0B0; font-variant-numeric: tabular-nums; }
+  .submit-btn { width: 100%; border: 0; border-radius: 11px; background: #14998B; color: #fff; font-size: 14.5px; font-weight: 800; padding: 15px 18px; }
+  .submit-btn:hover { background: #12887B; }
+
+  .footer-copy { text-align: center; font-size: 11px; font-weight: 500; color: #6B7C8C; margin-top: 4px; }
+
+  .modal-overlay { position: fixed; inset: 0; z-index: 40; background: rgb(16 32 47 / .55); display: flex; align-items: flex-end; justify-content: center; }
+  .modal-overlay[hidden] { display: none; }
+  .modal-sheet { width: 100%; max-width: 460px; background: #fff; border-radius: 20px 20px 0 0; padding: 20px 18px 22px; display: flex; flex-direction: column; gap: 14px; max-height: 92dvh; }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; }
+  .modal-head h2 { font-size: 18px; font-weight: 800; color: #10202F; }
+  .modal-close { width: 32px; height: 32px; border: 0; background: #F1F4F7; border-radius: 50%; font-size: 18px; line-height: 1; color: #55697A; }
+  .modal-body { display: flex; flex-direction: column; gap: 12px; overflow: auto; min-height: 0; }
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-group input[type="text"], .field-group textarea {
+    width: 100%; border: 1.5px solid #E4E9EE; border-radius: 12px; padding: 13px 14px;
+    font-size: 15px; font-weight: 600; color: #10202F; outline: none; background: #F7F9FA;
+  }
+  .field-group textarea { min-height: 148px; font-size: 14px; font-weight: 500; line-height: 1.55; resize: none; }
+  .modal-actions { display: flex; flex-direction: column; gap: 8px; }
+  .btn-outline { width: 100%; border: 1.5px solid #E4E9EE; background: #fff; border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 800; color: #10202F; }
+  .btn-solid { width: 100%; border: 0; background: #14998B; border-radius: 12px; padding: 15px; font-size: 15px; font-weight: 800; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="app">
+
+    <header class="top">
+      <div class="brand-col">
+        <div class="brand-row">
+          <img class="brand-logo" src="logo_icon.png" alt="HAIR_FINANCE">
+          <span class="brand-name">HAIR<b>_FINANCE</b></span>
+        </div>
+        <a class="phone-link" href="tel:+79298897711">+7 929-889-7711</a>
+      </div>
+      <a class="wa-btn" id="waHeaderLink" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">
+        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"></path></svg>
+      </a>
+    </header>
+
+    <main class="content">
+
+      <div class="tabs" id="tabs"></div>
+      <span class="tabs-caption" id="tabsCaption"></span>
+
+      <section class="card">
+        <span class="label">Стоимость товара</span>
+        <div class="field-row">
+          <input id="priceInput" inputmode="numeric" autocomplete="off" aria-label="Стоимость товара" />
+          <span class="field-suffix">₽</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="label">Первоначальный взнос</span>
+          <span class="hint" id="downPct"></span>
+        </div>
+        <div class="field-row">
+          <input id="downInput" inputmode="numeric" autocomplete="off" aria-label="Первоначальный взнос" />
+          <span class="field-suffix">₽</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <span class="label">Срок рассрочки</span>
+          <span class="hint" id="rateValue"></span>
+        </div>
+        <div class="field-row">
+          <input id="monthsInput" inputmode="numeric" autocomplete="off" aria-label="Срок рассрочки в месяцах" />
+          <span class="field-suffix small">мес.</span>
+        </div>
+      </section>
+
+      <section class="result">
+        <div class="result-top">
+          <span class="result-label">Ежемесячный платёж</span>
+          <span class="result-amount" id="monthlyOut"></span>
+        </div>
+        <div class="result-breakdown">
+          <div class="breakdown-row"><span>Сумма в рассрочку</span><b id="finOut"></b></div>
+          <div class="breakdown-row"><span>Вся переплата</span><b id="markOut"></b></div>
+          <div class="breakdown-row"><span>Первоначальный взнос</span><b id="doutOut"></b></div>
+          <div class="breakdown-row"><span>Корректировка округления</span><b id="roundOut"></b></div>
+          <div class="breakdown-total"><span>Итого к оплате</span><b id="totalOut"></b></div>
+        </div>
+        <button type="button" class="submit-btn" id="openModalBtn">Отправить расчет</button>
+      </section>
+
+      <p class="footer-copy">© HAIR_FINANCE 2026</p>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h2>Отправить расчет</h2>
+      <button type="button" class="modal-close" id="closeModalBtn" aria-label="Закрыть">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label for="productName" class="label">Название товара</label>
+        <input id="productName" type="text" placeholder="Например: iPhone" />
+      </div>
+      <div class="field-group">
+        <label for="waText" class="label">Сообщение</label>
+        <textarea id="waText"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-outline" id="copyBtn">Скопировать сообщение</button>
+      <button type="button" class="btn-solid" id="sendBtn">Отправить в WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const PHONE = "79298897711";
+  const TAB_NAMES = ["Закуп больше", "Закуп меньше"];
+
+  const state = {
+    v: 0,
+    calcs: [
+      { price: 60000, down: 15000, months: 6 },  // Закуп больше (> 15 000 ₽) — процентная наценка по сроку
+      { price: 10000, down: 0, months: 4 }        // Закуп меньше (< 15 000 ₽) — фиксированный сбор за месяц
+    ],
+    modalOpen: false,
+    product: "",
+    waText: "",
+    copied: false
+  };
+
+  function cur() { return state.calcs[state.v]; }
+  function patch(obj) {
+    state.calcs = state.calcs.map((c, i) => i === state.v ? Object.assign({}, c, obj) : c);
+    render();
+  }
+
+  function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+  function money(n) { return fmt(n) + " ₽"; }
+  function parse(raw) { const d = String(raw || "").replace(/\D/g, ""); return d ? Number(d) : 0; }
+  function mround50(n) { return Math.round(n / 50) * 50; }
+  function fmtPct(n) { return (Math.round(n * 10) / 10).toString().replace(/\.0$/, ""); }
+
+  // ---- "Закуп больше > 15 000 ₽": наценка растёт со сроком рассрочки ----
+  function bigRate(m) {
+    if (m <= 3) return 0.051;
+    if (m <= 5) return 0.048;
+    if (m <= 7) return 0.045;
+    if (m <= 9) return 0.043;
+    return 0.041; // 10-12 мес.
+  }
+  function calcBig(c) {
+    const months = Math.min(12, Math.max(1, c.months || 1));
+    const price = Math.max(0, c.price);
+    const down = Math.min(Math.max(0, c.down), price);
+    const rate = bigRate(months);
+    const financed = price - down;
+    const totalRaw = financed * (1 + months * rate) + down;
+    const monthlyRaw = (totalRaw - down) / months;
+    const monthly = mround50(monthlyRaw);
+    const total = monthly * months + down;
+    const overpay = total - price;
+    const overpayPct = price > 0 ? overpay / price * 100 : 0;
+    return {
+      months, price, down, financed, monthly, total, overpay,
+      roundOver: total - totalRaw,
+      downPct: price > 0 ? Math.round(down / price * 100) : 0,
+      overpayPct,
+      rateLabel: "Переплата " + fmtPct(overpayPct) + "%"
+    };
+  }
+
+  // ---- "Закуп меньше < 15 000 ₽": фикс. сбор за месяц + порог первого взноса ----
+  function smallFee(price) {
+    if (price > 10001) return 700;
+    if (price > 5001) return 600;
+    return 400;
+  }
+  function calcSmall(c) {
+    const months = Math.min(24, Math.max(1, c.months || 1));
+    const price = Math.max(0, c.price);
+    const down = Math.min(Math.max(0, c.down), price);
+    const fee = smallFee(price);
+    const totalFee = price + fee * months;
+    const threshold = totalFee * 0.15;
+    let adjusted;
+    if (down <= threshold) {
+      adjusted = totalFee + (threshold - down) * 0.055 * months;
+    } else {
+      adjusted = totalFee - (down - threshold) * 0.04 * months;
+    }
+    const monthlyRaw = (adjusted - down) / months;
+    const monthly = mround50(monthlyRaw);
+    const total = down + monthly * months;
+    const overpay = total - price;
+    const overpayPct = price > 0 ? overpay / price * 100 : 0;
+    return {
+      months, price, down, financed: price - down, monthly, total, overpay,
+      roundOver: total - (down + monthlyRaw * months),
+      downPct: price > 0 ? Math.round(down / price * 100) : 0,
+      overpayPct,
+      rateLabel: "Переплата " + fmtPct(overpayPct) + "%"
+    };
+  }
+
+  function calc() {
+    return state.v === 0 ? calcBig(cur()) : calcSmall(cur());
+  }
+
+  function buildMessage(r) {
+    const p = (state.product || "").trim() || "Товар";
+    return [
+      "Ассаламу алейкум! Заявка на расчёт рассрочки в HAIR_FINANCE (" + TAB_NAMES[state.v] + "):",
+      "• Название товара: " + p,
+      "• Стоимость: " + money(r.price),
+      "• Взнос: " + money(r.down) + " (" + r.downPct + "%)",
+      "• Срок: " + r.months + " мес.",
+      "• Платёж: " + money(r.monthly) + "/мес.",
+      "• Итого: " + money(r.total)
+    ].join("\n");
+  }
+
+  // ---- DOM refs ----
+  const tabsEl = document.getElementById("tabs");
+  const priceInput = document.getElementById("priceInput");
+  const downInput = document.getElementById("downInput");
+  const monthsInput = document.getElementById("monthsInput");
+  const downPctEl = document.getElementById("downPct");
+  const rateValueEl = document.getElementById("rateValue");
+  const monthlyOut = document.getElementById("monthlyOut");
+  const finOut = document.getElementById("finOut");
+  const markOut = document.getElementById("markOut");
+  const doutOut = document.getElementById("doutOut");
+  const roundOut = document.getElementById("roundOut");
+  const totalOut = document.getElementById("totalOut");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const productName = document.getElementById("productName");
+  const waTextArea = document.getElementById("waText");
+  const copyBtn = document.getElementById("copyBtn");
+  const waHeaderLink = document.getElementById("waHeaderLink");
+  const tabsCaption = document.getElementById("tabsCaption");
+  const TAB_CAPTIONS = ["Закуп больше > 15 000 ₽", "Закуп меньше < 15 000 ₽"];
+
+  waHeaderLink.href = "https://wa.me/" + PHONE + "?text=" + encodeURIComponent("Ассаламу алейкум! Хочу рассчитать рассрочку в HAIR_FINANCE");
+
+  function renderTabs() {
+    tabsEl.innerHTML = "";
+    TAB_NAMES.forEach((name, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tab-btn" + (i === state.v ? " active" : "");
+      btn.textContent = name;
+      btn.addEventListener("click", () => { state.v = i; render(); });
+      tabsEl.appendChild(btn);
+    });
+  }
+
+  function render() {
+    const r = calc();
+    const c = cur();
+
+    renderTabs();
+    tabsCaption.textContent = TAB_CAPTIONS[state.v];
+
+    if (document.activeElement !== priceInput) priceInput.value = fmt(c.price);
+    if (document.activeElement !== downInput) downInput.value = fmt(c.down);
+    if (document.activeElement !== monthsInput) monthsInput.value = r.months === 0 ? "" : String(r.months);
+
+    downPctEl.textContent = r.downPct + "% от стоимости";
+    rateValueEl.textContent = r.rateLabel;
+
+    monthlyOut.textContent = money(r.monthly);
+    finOut.textContent = money(r.financed);
+    markOut.textContent = money(r.overpay);
+    doutOut.textContent = money(r.down);
+    roundOut.textContent = money(r.roundOver);
+    totalOut.textContent = money(r.total);
+
+    if (!state.modalOpen) {
+      productName.value = state.product;
+    }
+  }
+
+  priceInput.addEventListener("input", e => {
+    const val = parse(e.target.value);
+    patch({ price: val, down: Math.min(cur().down, val) });
+  });
+  downInput.addEventListener("input", e => {
+    patch({ down: Math.min(parse(e.target.value), cur().price) });
+  });
+  monthsInput.addEventListener("input", e => {
+    const max = state.v === 0 ? 12 : 24;
+    patch({ months: Math.min(max, parse(e.target.value)) });
+  });
+
+  function openModal() {
+    state.modalOpen = true;
+    state.product = "";
+    state.waText = buildMessage(calc());
+    state.copied = false;
+    productName.value = state.product;
+    waTextArea.value = state.waText;
+    copyBtn.textContent = "Скопировать сообщение";
+    modalOverlay.hidden = false;
+  }
+  function closeModal() {
+    state.modalOpen = false;
+    modalOverlay.hidden = true;
+  }
+
+  document.getElementById("openModalBtn").addEventListener("click", openModal);
+  document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+  modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) closeModal(); });
+  modalOverlay.querySelector(".modal-sheet").addEventListener("click", e => e.stopPropagation());
+
+  productName.addEventListener("input", e => {
+    state.product = e.target.value;
+    state.waText = buildMessage(calc());
+    waTextArea.value = state.waText;
+  });
+  waTextArea.addEventListener("input", e => { state.waText = e.target.value; });
+
+  copyBtn.addEventListener("click", () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(state.waText).then(() => {
+        copyBtn.textContent = "Скопировано";
+        setTimeout(() => { copyBtn.textContent = "Скопировать сообщение"; }, 1600);
+      });
+    }
+  });
+
+  document.getElementById("sendBtn").addEventListener("click", () => {
+    window.open("https://wa.me/" + PHONE + "?text=" + encodeURIComponent(state.waText), "_blank", "noopener,noreferrer");
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
