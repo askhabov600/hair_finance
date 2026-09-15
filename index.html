@@ -270,7 +270,7 @@
   function buildMessage(r) {
     const p = (state.product || "").trim() || "Товар";
     return [
-      "Ассаламу алейкум! Заявка на расчёт рассрочки в HAIR_FINANCE (" + TAB_NAMES[state.v] + "):",
+      "Расчёт рассрочки в HAIR_FINANCE (" + TAB_NAMES[state.v] + "):",
       "• Название товара: " + p,
       "• Стоимость: " + money(r.price),
       "• Взнос: " + money(r.down) + " (" + r.downPct + "%)",
