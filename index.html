@@ -187,6 +187,7 @@
       { price: 60000, down: 15000, months: 6 },  // Закуп больше (> 15 000 ₽) — наценка по таблице (со взносом / без взноса)
       { price: 10000, down: 0, months: 4 }        // Закуп меньше (< 15 000 ₽) — фиксированный сбор за месяц
     ],
+    // down: null — поле взноса пустое (как пустая ячейка в Excel) → взнос считается автоматически
     modalOpen: false,
     product: "",
     waText: "",
@@ -202,8 +203,13 @@
   function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function money(n) { return fmt(n) + " ₽"; }
   function parse(raw) { const d = String(raw || "").replace(/\D/g, ""); return d ? Number(d) : 0; }
-  // округление платежа до ближайших 50 ₽ (5206 → 5200, 5230 → 5250)
-  function mround50(n) { return Math.round(n / 50) * 50; }
+  // округление как в Excel MROUND: сначала до копеек (убирает погрешность 4024,9999 → 4025),
+  // затем до ближайшего кратного
+  function mround(n, step) { return Math.round(Math.round(n * 100) / 100 / step) * step; }
+  // MROUND(x; 50) — ежемесячный платёж (5206 → 5200, 4025 → 4050)
+  function mround50(n) { return mround(n, 50); }
+  // MROUND(x; 100) — автоматический первый взнос
+  function mround100(n) { return mround(n, 100); }
 
   // ---- "Закуп больше > 15 000 ₽": наценка по таблице (со взносом / без взноса) ----
   const BIG_RATES_WITH_DOWN = { 3: 0.11, 4: 0.14, 5: 0.18, 6: 0.21, 7: 0.25, 8: 0.28, 9: 0.32, 10: 0.35, 11: 0.39, 12: 0.42 };
@@ -217,7 +223,11 @@
   function calcBig(c) {
     const months = Math.min(12, Math.max(1, c.months || 1));
     const price = Math.max(0, c.price);
-    const down = Math.min(Math.max(0, c.down), price);
+    const autoDown = c.down === null;
+    // пустой взнос → MROUND(цена × 35%; 100), как в Excel
+    const down = autoDown
+      ? Math.min(mround100(price * 0.35), price)
+      : Math.min(Math.max(0, c.down), price);
     const rate = bigRate(months, down > 0);
     const financed = price - down;
     const totalRaw = financed * (1 + rate) + down;
@@ -227,7 +237,7 @@
     const overpay = total - price;
     const overpayPct = price > 0 ? overpay / price * 100 : 0;
     return {
-      months, price, down, financed, monthly, total, overpay,
+      months, price, down, autoDown, financed, monthly, total, overpay,
       overpayMonthly: overpay / months,
       roundOver: total - totalRaw,
       downPct: price > 0 ? Math.round(down / price * 100) : 0,
@@ -244,25 +254,37 @@
   function calcSmall(c) {
     const months = Math.min(24, Math.max(1, c.months || 1));
     const price = Math.max(0, c.price);
-    const down = Math.min(Math.max(0, c.down), price);
     const fee = smallFee(price);
     const totalFee = price + fee * months;
     const threshold = totalFee * 0.15;
-    let adjusted;
-    if (down <= threshold) {
-      adjusted = totalFee + (threshold - down) * 0.055 * months;
+    const autoDown = c.down === null;
+    let down, monthlyRaw, monthly, total, roundOver;
+    if (autoDown) {
+      // пустой взнос (как в Excel): взнос = MROUND(15%; 100), платёж = MROUND((сумма − 15%) / срок; 50)
+      down = mround100(threshold);
+      monthlyRaw = (totalFee - threshold) / months;
+      monthly = mround50(monthlyRaw);
+      total = down + monthly * months;
+      roundOver = total - totalFee;
     } else {
-      adjusted = totalFee - (down - threshold) * 0.04 * months;
+      down = Math.min(Math.max(0, c.down), price);
+      let adjusted;
+      if (down <= threshold) {
+        adjusted = totalFee + (threshold - down) * 0.055 * months;
+      } else {
+        adjusted = totalFee - (down - threshold) * 0.04 * months;
+      }
+      monthlyRaw = (adjusted - down) / months;
+      monthly = mround50(monthlyRaw);
+      total = down + monthly * months;
+      roundOver = total - (down + monthlyRaw * months);
     }
-    const monthlyRaw = (adjusted - down) / months;
-    const monthly = mround50(monthlyRaw);
-    const total = down + monthly * months;
     const overpay = total - price;
     const overpayPct = price > 0 ? overpay / price * 100 : 0;
     return {
-      months, price, down, financed: price - down, monthly, total, overpay,
+      months, price, down, autoDown, financed: price - down, monthly, total, overpay,
       overpayMonthly: overpay / months,
-      roundOver: total - (down + monthlyRaw * months),
+      roundOver,
       downPct: price > 0 ? Math.round(down / price * 100) : 0,
       overpayPct
     };
@@ -328,10 +350,11 @@
     tabsCaption.textContent = TAB_CAPTIONS[state.v];
 
     if (document.activeElement !== priceInput) priceInput.value = fmt(c.price);
-    if (document.activeElement !== downInput) downInput.value = fmt(c.down);
+    if (document.activeElement !== downInput) downInput.value = c.down === null ? "" : fmt(c.down);
+    downInput.placeholder = fmt(r.down);
     if (document.activeElement !== monthsInput) monthsInput.value = r.months === 0 ? "" : String(r.months);
 
-    downPctEl.textContent = r.downPct + "% от стоимости";
+    downPctEl.textContent = r.downPct + "% от стоимости" + (r.autoDown ? " · авто" : "");
 
     monthlyOut.textContent = money(r.monthly);
     finOut.textContent = money(r.financed);
@@ -348,10 +371,16 @@
 
   priceInput.addEventListener("input", e => {
     const val = parse(e.target.value);
-    patch({ price: val, down: Math.min(cur().down, val) });
+    const d = cur().down;
+    patch({ price: val, down: d === null ? null : Math.min(d, val) });
   });
   downInput.addEventListener("input", e => {
-    patch({ down: Math.min(parse(e.target.value), cur().price) });
+    const digits = String(e.target.value || "").replace(/\D/g, "");
+    if (digits === "") {
+      patch({ down: null }); // пустое поле → автоматический взнос, как в Excel
+    } else {
+      patch({ down: Math.min(Number(digits), cur().price) });
+    }
   });
   monthsInput.addEventListener("input", e => {
     const max = state.v === 0 ? 12 : 24;
