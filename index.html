@@ -183,7 +183,7 @@
   const state = {
     v: 0,
     calcs: [
-      { price: 60000, down: 15000, months: 6 },  // Закуп больше (> 15 000 ₽) — процентная наценка по сроку
+      { price: 60000, down: 15000, months: 6 },  // Закуп больше (> 15 000 ₽) — наценка по таблице (со взносом / без взноса)
       { price: 10000, down: 0, months: 4 }        // Закуп меньше (< 15 000 ₽) — фиксированный сбор за месяц
     ],
     modalOpen: false,
@@ -203,21 +203,22 @@
   function parse(raw) { const d = String(raw || "").replace(/\D/g, ""); return d ? Number(d) : 0; }
   function mround50(n) { return Math.ceil(n / 50) * 50; }
 
-  // ---- "Закуп больше > 15 000 ₽": наценка растёт со сроком рассрочки ----
-  function bigRate(m) {
-    if (m <= 3) return 0.051;
-    if (m <= 5) return 0.048;
-    if (m <= 7) return 0.045;
-    if (m <= 9) return 0.043;
-    return 0.041; // 10-12 мес.
+  // ---- "Закуп больше > 15 000 ₽": наценка по таблице (со взносом / без взноса) ----
+  const BIG_RATES_WITH_DOWN = { 3: 0.11, 4: 0.14, 5: 0.18, 6: 0.21, 7: 0.25, 8: 0.28, 9: 0.32, 10: 0.35, 11: 0.39, 12: 0.42 };
+  const BIG_RATES_NO_DOWN   = { 3: 0.16, 4: 0.19, 5: 0.23, 6: 0.26, 7: 0.30, 8: 0.34, 9: 0.38, 10: 0.42, 11: 0.46, 12: 0.49 };
+  function bigRate(m, hasDown) {
+    const table = hasDown ? BIG_RATES_WITH_DOWN : BIG_RATES_NO_DOWN;
+    // 1–2 мес.: процент за 3 мес. делим на 3 (процент за месяц) и умножаем на срок
+    if (m < 3) return table[3] / 3 * m;
+    return table[Math.min(12, m)];
   }
   function calcBig(c) {
     const months = Math.min(12, Math.max(1, c.months || 1));
     const price = Math.max(0, c.price);
     const down = Math.min(Math.max(0, c.down), price);
-    const rate = bigRate(months);
+    const rate = bigRate(months, down > 0);
     const financed = price - down;
-    const totalRaw = financed * (1 + months * rate) + down;
+    const totalRaw = financed * (1 + rate) + down;
     const monthlyRaw = (totalRaw - down) / months;
     const monthly = mround50(monthlyRaw);
     const total = monthly * months + down;
