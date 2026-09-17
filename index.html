@@ -140,6 +140,7 @@
         <div class="result-breakdown">
           <div class="breakdown-row"><span>Сумма в рассрочку</span><b id="finOut"></b></div>
           <div class="breakdown-row"><span>Вся переплата</span><b id="markOut"></b></div>
+          <div class="breakdown-row"><span>Переплата в месяц</span><b id="markMonthOut"></b></div>
           <div class="breakdown-row"><span>Первоначальный взнос</span><b id="doutOut"></b></div>
           <div class="breakdown-row"><span>Корректировка округления</span><b id="roundOut"></b></div>
           <div class="breakdown-total"><span>Итого к оплате</span><b id="totalOut"></b></div>
@@ -201,7 +202,8 @@
   function fmt(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
   function money(n) { return fmt(n) + " ₽"; }
   function parse(raw) { const d = String(raw || "").replace(/\D/g, ""); return d ? Number(d) : 0; }
-  function mround50(n) { return Math.ceil(n / 50) * 50; }
+  // округление платежа до ближайших 50 ₽ (5206 → 5200, 5230 → 5250)
+  function mround50(n) { return Math.round(n / 50) * 50; }
 
   // ---- "Закуп больше > 15 000 ₽": наценка по таблице (со взносом / без взноса) ----
   const BIG_RATES_WITH_DOWN = { 3: 0.11, 4: 0.14, 5: 0.18, 6: 0.21, 7: 0.25, 8: 0.28, 9: 0.32, 10: 0.35, 11: 0.39, 12: 0.42 };
@@ -226,6 +228,7 @@
     const overpayPct = price > 0 ? overpay / price * 100 : 0;
     return {
       months, price, down, financed, monthly, total, overpay,
+      overpayMonthly: overpay / months,
       roundOver: total - totalRaw,
       downPct: price > 0 ? Math.round(down / price * 100) : 0,
       overpayPct
@@ -258,6 +261,7 @@
     const overpayPct = price > 0 ? overpay / price * 100 : 0;
     return {
       months, price, down, financed: price - down, monthly, total, overpay,
+      overpayMonthly: overpay / months,
       roundOver: total - (down + monthlyRaw * months),
       downPct: price > 0 ? Math.round(down / price * 100) : 0,
       overpayPct
@@ -290,6 +294,7 @@
   const monthlyOut = document.getElementById("monthlyOut");
   const finOut = document.getElementById("finOut");
   const markOut = document.getElementById("markOut");
+  const markMonthOut = document.getElementById("markMonthOut");
   const doutOut = document.getElementById("doutOut");
   const roundOut = document.getElementById("roundOut");
   const totalOut = document.getElementById("totalOut");
@@ -331,6 +336,7 @@
     monthlyOut.textContent = money(r.monthly);
     finOut.textContent = money(r.financed);
     markOut.textContent = money(r.overpay);
+    markMonthOut.textContent = money(r.overpayMonthly);
     doutOut.textContent = money(r.down);
     roundOut.textContent = money(r.roundOver);
     totalOut.textContent = money(r.total);
